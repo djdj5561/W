@@ -19,15 +19,15 @@
 ## 安装与启动（Windows PowerShell）
 
 ```powershell
-cd outputs\campus-guide-assistant
-py -3.11 -m venv .venv
+cd W
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-Copy-Item .env.example .env
-streamlit run app.py
+Copy-Item .env.example .env -ErrorAction SilentlyContinue
+python -m streamlit run app.py
 ```
 
-浏览器打开 Streamlit 输出的本地地址即可。启动前请确保 Ollama 服务正在运行，或在 `.env` 中填写其他 OpenAI 兼容服务配置。
+如果你把仓库克隆到了其他目录，请把第一行 `cd W` 换成实际仓库路径。启动前请确保 Ollama 服务正在运行，或在 `.env` 中填写其他 OpenAI 兼容服务配置。浏览器打开 `http://127.0.0.1:8501`。
 
 ## 可选模型配置
 
