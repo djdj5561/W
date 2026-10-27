@@ -83,8 +83,27 @@ def model_run(user_text: str) -> tuple[list[ToolCall], list[Any]] | None:
                 results.append(result)
                 messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": json.dumps(result, ensure_ascii=False)})
             response = client.chat.completions.create(model=os.getenv("OPENAI_MODEL", "qwen-plus"), messages=messages, tools=tools, tool_choice="auto")
+        # Some local models stop after the search call. Complete the business
+        # workflow from that model-selected guide so the UI always has a
+        # concrete result to render.
+        if not any(call.name == "get_requirements" for call in calls):
+            search_result = next(
+                (result for call, result in zip(calls, results) if call.name == "search_guides" and result),
+                None,
+            )
+            if search_result:
+                guide_id = search_result[0]["id"]
+                detail_call = ToolCall("get_requirements", {"guide_id": guide_id})
+                calls.append(detail_call)
+                results.append(execute_tool(detail_call))
+                wants_checklist = any(word in user_text for word in ["清单", "材料", "需要", "准备", "怎么办", "步骤", "流程"])
+                if wants_checklist and not any(call.name == "build_checklist" for call in calls):
+                    checklist_call = ToolCall("build_checklist", {"guide_id": guide_id, "student_context": user_text})
+                    calls.append(checklist_call)
+                    results.append(execute_tool(checklist_call))
         return calls, results
-    except Exception:
+    except Exception as error:
+        st.error(f"模型调用失败：{error}")
         return None
 
 
