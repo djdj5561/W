@@ -29,6 +29,12 @@ python -m streamlit run app.py
 
 如果你把仓库克隆到了其他目录，请把第一行 `cd W` 换成实际仓库路径。启动前请确保 Ollama 服务正在运行，或在 `.env` 中填写其他 OpenAI 兼容服务配置。浏览器打开 `http://127.0.0.1:8501`。
 
+## 换电脑演示
+
+PPT 不需要安装 Python，直接双击 `slides.html`，或双击 `open_slides.bat` 即可打开。
+
+应用需要在演示电脑上安装 Python 和 Ollama。Windows 用户可以双击 `run_app.bat`，脚本会创建虚拟环境、安装依赖、检查并启动 `qwen2.5:7b`，然后打开 Streamlit 应用。首次运行需要下载约 4.7 GB 模型。
+
 ## 可选模型配置
 
 默认配置使用 Ollama 的 `qwen2.5:7b`：
