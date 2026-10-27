@@ -19,34 +19,24 @@ st.set_page_config(page_title="校园办事指南助手", page_icon="▣", layou
 st.markdown(
     """
     <style>
-    :root { --ink:#17212b; --muted:#5d6c76; --teal:#0b6e69; --deep:#123f43; --mint:#e8f4f1; --line:#d5e2de; --gold:#e6c36a; --page:#eaf1ee; --canvas:#fbfcf8; }
-    .stApp { background: var(--page); color: var(--ink); }
-    [data-testid="stHeader"] { background: transparent; }
-    [data-testid="stAppViewContainer"] { background: var(--page); }
-    [data-testid="stMainBlockContainer"] { background: var(--canvas); border-radius: 18px; box-shadow: 0 18px 50px rgba(18,63,67,.08); }
-    .block-container { max-width: 1260px; padding-top: 1.8rem; padding-bottom: 3rem; }
+    :root { --ink:#17212b; --muted:#5d6c76; --teal:#0b6e69; --deep:#123f43; --mint:#e8f4f1; --line:#d5e2de; --gold:#e6c36a; }
+    .stApp { background: #f7f8f5; color: var(--ink); }
+    .block-container { max-width: 1220px; padding-top: 2.2rem; }
     h1,h2,h3 { color: var(--ink); letter-spacing: 0; }
-    .hero { background: var(--deep); color: #f6faf7; padding: 38px 42px; border-radius: 16px; margin-bottom: 28px; box-shadow: 0 16px 32px rgba(18,63,67,.18); border: 1px solid rgba(216,233,229,.2); }
+    .hero { background: var(--deep); color: #f6faf7; padding: 34px 38px; border-radius: 16px; margin-bottom: 26px; box-shadow: 0 12px 28px rgba(18,63,67,.13); }
     .hero h1 { color: #f6faf7; margin: 0 0 10px; font-size: 2.35rem; letter-spacing: -.02em; }
     .hero p { margin: 0; color: #d8e9e5; max-width: 720px; line-height: 1.65; }
-    .eyebrow { color: #d9bd70; font-size: .76rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
-    .section-kicker { color: var(--teal); font-size: .76rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 7px; }
-    .section-copy { color: var(--muted); margin: 0 0 14px; line-height: 1.5; }
-    .result-shell { border-top: 3px solid var(--teal); padding-top: 16px; margin-top: 28px; }
-    .result-meta { color: var(--muted); font-size: .9rem; margin: 0 0 14px; }
     .guide-title { font-size: 1.35rem; font-weight: 750; color: var(--teal); margin-bottom: 6px; }
-    .catalog { border-top: 1px solid var(--line); background: #f7faf7; padding: 4px 16px 2px; border-radius: 12px; }
+    .catalog { border-top: 1px solid var(--line); }
     .catalog-item { padding: 13px 0 12px; border-bottom: 1px solid var(--line); }
     .catalog-item strong { color: var(--ink); font-size: .98rem; }
     .catalog-item span { display:block; color: var(--muted); font-size: .82rem; margin-top: 4px; line-height: 1.45; }
     .catalog-category { color: var(--teal); font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
     .muted { color: var(--muted); }
-    .stButton>button { border-radius: 9px; min-height: 2.8rem; font-weight: 650; border: 1px solid #b9d8d1; }
-    .stButton>button[kind="primary"] { background: var(--teal); border-color: var(--teal); }
-    .stTextArea textarea { border-radius: 10px; border: 1px solid #9fc9c0; background: #fff; padding: 14px; line-height: 1.55; }
-    [data-testid="stMetric"] { background: var(--mint); border: 1px solid #c6ded8; padding: 10px 14px; border-radius: 10px; }
+    .stButton>button { border-radius: 9px; min-height: 2.8rem; font-weight: 650; }
+    .stTextArea textarea { border-radius: 10px; border-color: #b9d8d1; }
     </style>
-    <div class='hero'><div class='eyebrow'>CAMPUS SERVICE DESK · AI ASSISTANT</div><h1>校园办事指南助手</h1><p>描述你要办理的校园事务，助手会整理办理步骤、所需材料和可下载的任务清单。</p></div>
+    <div class='hero'><h1>校园办事指南助手</h1><p>描述你要办理的校园事务，助手会整理办理步骤、所需材料和可下载的任务清单。</p></div>
     """,
     unsafe_allow_html=True,
 )
@@ -119,12 +109,12 @@ def model_run(user_text: str) -> tuple[list[ToolCall], list[Any]] | None:
 
 
 def render_result(calls: list[ToolCall], results: list[Any]) -> None:
-    st.markdown("<div class='result-shell'><div class='section-kicker'>处理结果</div><h2 style='margin:0 0 4px'>办理结果</h2><p class='result-meta'>模型已根据你的问题匹配指南，并整理出可执行的下一步。</p></div>", unsafe_allow_html=True)
+    st.subheader("办理结果")
     guide = next((result for call, result in zip(calls, results) if call.name == "get_requirements" and result), None)
     if guide:
         st.markdown(f"<div class='guide-title'>{guide['title']}</div>", unsafe_allow_html=True)
         st.write(guide["summary"])
-        left, right = st.columns([1.15, 0.85], gap="large")
+        left, right = st.columns(2)
         with left:
             st.markdown("**办理步骤**")
             for index, step in enumerate(guide["steps"], 1):
@@ -137,12 +127,8 @@ def render_result(calls: list[ToolCall], results: list[Any]) -> None:
             st.info(guide["official_note"])
     checklist = next((result for call, result in zip(calls, results) if call.name == "build_checklist" and result), None)
     if checklist:
-        st.markdown("<div class='section-kicker'>可带走的材料</div>", unsafe_allow_html=True)
-        download_left, download_right = st.columns(2, gap="small")
-        with download_left:
-            st.download_button("下载 Markdown 清单", checklist, file_name="campus-checklist.md", mime="text/markdown", use_container_width=True)
-        with download_right:
-            st.download_button("下载 HTML 清单", markdown_to_html(checklist), file_name="campus-checklist.html", mime="text/html", use_container_width=True)
+        st.download_button("下载 Markdown 办事清单", checklist, file_name="campus-checklist.md", mime="text/markdown")
+        st.download_button("下载 HTML 办事清单", markdown_to_html(checklist), file_name="campus-checklist.html", mime="text/html")
         with st.expander("查看生成的清单"):
             st.code(checklist, language="markdown")
     if guide:
@@ -171,9 +157,8 @@ with st.sidebar:
 
 left, right = st.columns([1.1, 0.9], gap="large")
 with left:
-    st.markdown("<div class='section-kicker'>第一步 · 描述需求</div><h2 style='margin:0 0 4px'>输入你的校园事务</h2><p class='section-copy'>说清楚要办理什么，模型会自动匹配对应指南。</p>", unsafe_allow_html=True)
+    st.subheader("输入你的校园事务")
     prompt = st.text_area("问题", placeholder="例如：我想请病假，需要哪些步骤和材料？", height=120, label_visibility="collapsed")
-    st.caption("示例：校园卡挂失补办 · 宿舍水龙头报修 · 打印在读证明")
     run = st.button("开始办理", type="primary", use_container_width=True)
     if run:
         if not prompt.strip():
@@ -192,7 +177,8 @@ with left:
         render_result(latest["calls"], latest["results"])
 
 with right:
-    st.markdown("<div class='section-kicker'>服务索引 · 8 类事项</div><h2 style='margin:0 0 4px'>可查询事项</h2><p class='section-copy'>当前指南库支持以下校园服务，直接用自然语言提问即可。</p>", unsafe_allow_html=True)
+    st.subheader("可查询事项")
+    st.caption("当前指南库支持以下校园服务，直接用自然语言提问即可。")
     catalog_html = ["<div class='catalog'>"]
     for guide in load_guides():
         catalog_html.append(
