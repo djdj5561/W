@@ -9,7 +9,7 @@ from typing import Any
 import streamlit as st
 from dotenv import load_dotenv
 
-from tools import ToolCall, execute_tool, markdown_to_html, search_guides
+from tools import ToolCall, execute_tool, markdown_to_html
 
 
 load_dotenv(Path(__file__).parent / ".env")
@@ -35,26 +35,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-
-def local_plan(user_text: str) -> tuple[list[ToolCall], str]:
-    """Deterministic demo planner: emits ToolCall objects, then dispatches them.
-
-    In classroom mode this keeps the demo runnable without a key. With an
-    OpenAI-compatible key, `model_run` can replace this planner.
-    """
-    text = user_text.strip()
-    guides = search_guides(text)
-    if not guides:
-        return [ToolCall("search_guides", {"query": text})], "我暂时没有匹配到指南，请换一个事务关键词。"
-    selected = guides[0]
-    calls = [
-        ToolCall("search_guides", {"query": text}),
-        ToolCall("get_requirements", {"guide_id": selected["id"]}),
-    ]
-    if any(word in text for word in ["清单", "材料", "需要", "准备", "怎么办", "步骤", "流程"]):
-        calls.append(ToolCall("build_checklist", {"guide_id": selected["id"], "student_context": text}))
-    return calls, selected["id"]
 
 
 def model_run(user_text: str) -> tuple[list[ToolCall], list[Any]] | None:
@@ -142,7 +122,8 @@ if "history" not in st.session_state:
 
 with st.sidebar:
     st.markdown("### 演示控制台")
-    mode = st.radio("规划模式", ["本地演示模式", "OpenAI 兼容模型（可选）"], help="没有 API Key 时会自动使用本地演示模式。")
+    st.success("真实模型模式")
+    st.caption("当前通过 Ollama 调用 qwen2.5:7b，并使用 Tool Calling 执行业务操作。")
     st.markdown("---")
     st.markdown("**推荐演示话术**")
     st.code("我想办理校园卡挂失补办，需要准备什么？", language="text")
@@ -158,17 +139,12 @@ with left:
         if not prompt.strip():
             st.warning("请先输入一个校园事务问题。")
         else:
-            model_result = model_run(prompt) if mode.startswith("OpenAI") else None
-            if model_result:
+            model_result = model_run(prompt)
+            if model_result and model_result[0]:
                 calls, results = model_result
             else:
-                calls, _ = local_plan(prompt)
-                results = []
-                for call in calls:
-                    try:
-                        results.append(execute_tool(call))
-                    except Exception as error:
-                        results.append({"error": str(error)})
+                st.error("模型没有返回工具调用。请确认 Ollama 正在运行，并检查 .env 中的模型配置。")
+                calls, results = [], []
             st.session_state.history.append({"prompt": prompt, "calls": calls, "results": results})
             render_result(calls, results)
     elif st.session_state.history:

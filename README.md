@@ -6,8 +6,8 @@
 
 - 4 个可调用业务工具：`search_guides`、`get_requirements`、`build_checklist`、`submit_application`
 - Streamlit 交互界面，右侧展示实际工具调用链
-- 本地演示模式无需 API Key，适合课堂现场稳定演示
-- 可选 OpenAI 兼容接口（例如阿里百炼）
+- 使用真实模型进行多轮 Tool Calling
+- 支持 Ollama 本地模型和其他 OpenAI 兼容接口
 - 模拟提交必须经过用户确认，且不会连接真实学校系统
 - 数据、工具、界面分层，便于现场解释关键代码
 
@@ -27,11 +27,19 @@ Copy-Item .env.example .env
 streamlit run app.py
 ```
 
-浏览器打开 Streamlit 输出的本地地址即可。`.env` 可以保持空白，项目会自动使用本地演示模式。
+浏览器打开 Streamlit 输出的本地地址即可。启动前请确保 Ollama 服务正在运行，或在 `.env` 中填写其他 OpenAI 兼容服务配置。
 
 ## 可选模型配置
 
-在 `.env` 中填写 OpenAI 兼容服务的 Key、Base URL 和模型名。不要把真实 `.env` 提交到 Git。没有 Key 时，项目仍可完整演示工具调用闭环。
+默认配置使用 Ollama 的 `qwen2.5:7b`：
+
+```env
+OPENAI_API_KEY=ollama
+OPENAI_BASE_URL=http://localhost:11434/v1
+OPENAI_MODEL=qwen2.5:7b
+```
+
+也可以在 `.env` 中填写其他 OpenAI 兼容服务的 Key、Base URL 和模型名。不要把真实 `.env` 提交到 Git。
 
 ## 推荐演示话术
 
@@ -42,13 +50,12 @@ streamlit run app.py
 ## 关键代码讲解
 
 - `tools.py`：三个业务工具和 `TOOL_REGISTRY`，负责可审计的本地业务操作。
-- `app.py:local_plan`：本地演示模式生成 `ToolCall` 序列，确保没有 Key 也能现场运行。
 - `app.py:model_run`：执行多轮 Tool Calling，把工具结果继续交给模型，直到主路径结束。
 - `app.py:render_result`：将工具结果转成步骤、材料和下载文件。
 
 ## 相比课堂 demo 的增量
 
-本项目不是单轮聊天换皮：新增了校园办事场景、本地结构化指南数据、四个业务工具、可见执行日志、办事清单文件产出、确认后模拟提交，以及模型不可用时的本地演示降级方案。
+本项目不是单轮聊天换皮：新增了校园办事场景、本地结构化指南数据、四个业务工具、可见执行日志、办事清单文件产出，以及确认后模拟提交。
 
 ## 数据与合规说明
 
