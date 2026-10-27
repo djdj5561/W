@@ -9,7 +9,7 @@ from typing import Any
 import streamlit as st
 from dotenv import load_dotenv
 
-from tools import ToolCall, execute_tool, markdown_to_html
+from tools import ToolCall, execute_tool, load_guides, markdown_to_html
 
 
 load_dotenv(Path(__file__).parent / ".env")
@@ -19,19 +19,24 @@ st.set_page_config(page_title="校园办事指南助手", page_icon="▣", layou
 st.markdown(
     """
     <style>
-    :root { --ink:#17212b; --muted:#61717c; --teal:#0b6e69; --mint:#e8f4f1; --gold:#e6c36a; }
+    :root { --ink:#17212b; --muted:#5d6c76; --teal:#0b6e69; --deep:#123f43; --mint:#e8f4f1; --line:#d5e2de; --gold:#e6c36a; }
     .stApp { background: #f7f8f5; color: var(--ink); }
-    .block-container { max-width: 1180px; padding-top: 2.2rem; }
+    .block-container { max-width: 1220px; padding-top: 2.2rem; }
     h1,h2,h3 { color: var(--ink); letter-spacing: 0; }
-    .hero { background: #123f43; color: #f6faf7; padding: 28px 32px; border-radius: 14px; margin-bottom: 18px; }
-    .hero h1 { color: #f6faf7; margin: 0 0 8px; font-size: 2.25rem; }
-    .hero p { margin: 0; color: #d8e9e5; max-width: 720px; }
-    .tool-log { border: 1px solid #b9d8d1; background: var(--mint); padding: 10px 14px; margin: 8px 0; border-radius: 8px; font-size: .93rem; }
-    .guide-title { font-size: 1.15rem; font-weight: 700; color: var(--teal); }
+    .hero { background: var(--deep); color: #f6faf7; padding: 34px 38px; border-radius: 16px; margin-bottom: 26px; box-shadow: 0 12px 28px rgba(18,63,67,.13); }
+    .hero h1 { color: #f6faf7; margin: 0 0 10px; font-size: 2.35rem; letter-spacing: -.02em; }
+    .hero p { margin: 0; color: #d8e9e5; max-width: 720px; line-height: 1.65; }
+    .guide-title { font-size: 1.35rem; font-weight: 750; color: var(--teal); margin-bottom: 6px; }
+    .catalog { border-top: 1px solid var(--line); }
+    .catalog-item { padding: 13px 0 12px; border-bottom: 1px solid var(--line); }
+    .catalog-item strong { color: var(--ink); font-size: .98rem; }
+    .catalog-item span { display:block; color: var(--muted); font-size: .82rem; margin-top: 4px; line-height: 1.45; }
+    .catalog-category { color: var(--teal); font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
     .muted { color: var(--muted); }
-    .stButton>button { border-radius: 8px; }
+    .stButton>button { border-radius: 9px; min-height: 2.8rem; font-weight: 650; }
+    .stTextArea textarea { border-radius: 10px; border-color: #b9d8d1; }
     </style>
-    <div class='hero'><h1>校园办事指南助手</h1><p>把一句模糊的校园事务问题，转成可执行的办理步骤、材料清单和可下载文件。所有工具调用都会显示在右侧。</p></div>
+    <div class='hero'><h1>校园办事指南助手</h1><p>描述你要办理的校园事务，助手会整理办理步骤、所需材料和可下载的任务清单。</p></div>
     """,
     unsafe_allow_html=True,
 )
@@ -152,11 +157,13 @@ with left:
         render_result(latest["calls"], latest["results"])
 
 with right:
-    st.subheader("工具调用过程")
-    if st.session_state.history:
-        for entry in st.session_state.history[-1]["calls"]:
-            st.markdown(f"<div class='tool-log'><b>调用工具：</b>{entry.name}<br><span class='muted'>参数：{entry.arguments}</span></div>", unsafe_allow_html=True)
-    else:
-        st.info("提交问题后，这里会显示 search_guides → get_requirements → build_checklist 的执行链。")
-    st.markdown("### 当前工具数量")
-    st.metric("可调用业务操作", "4")
+    st.subheader("可查询事项")
+    st.caption("当前指南库支持以下校园服务，直接用自然语言提问即可。")
+    catalog_html = ["<div class='catalog'>"]
+    for guide in load_guides():
+        catalog_html.append(
+            f"<div class='catalog-item'><div class='catalog-category'>{guide['category']}</div>"
+            f"<strong>{guide['title']}</strong><span>{guide['summary']}</span></div>"
+        )
+    catalog_html.append("</div>")
+    st.markdown("".join(catalog_html), unsafe_allow_html=True)
