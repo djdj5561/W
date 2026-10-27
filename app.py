@@ -44,20 +44,21 @@ st.markdown(
 
 def model_run(user_text: str) -> tuple[list[ToolCall], list[Any]] | None:
     """Run a real multi-turn OpenAI-compatible tool-calling loop."""
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    if not api_key:
-        return None
+    # Ollama is the default local model service; .env can override it.
+    api_key = os.getenv("OPENAI_API_KEY", "ollama").strip() or "ollama"
+    base_url = os.getenv("OPENAI_BASE_URL", "http://localhost:11434/v1").strip()
+    model_name = os.getenv("OPENAI_MODEL", "qwen2.5:7b").strip()
     try:
         from openai import OpenAI
 
-        client = OpenAI(api_key=api_key, base_url=os.getenv("OPENAI_BASE_URL"))
+        client = OpenAI(api_key=api_key, base_url=base_url, timeout=120.0, max_retries=1)
         tools = [
             {"type": "function", "function": {"name": "search_guides", "description": "搜索校园办事指南", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
             {"type": "function", "function": {"name": "get_requirements", "description": "查询指南步骤和材料", "parameters": {"type": "object", "properties": {"guide_id": {"type": "string"}}, "required": ["guide_id"]}}},
             {"type": "function", "function": {"name": "build_checklist", "description": "生成办事清单", "parameters": {"type": "object", "properties": {"guide_id": {"type": "string"}, "student_context": {"type": "string"}}, "required": ["guide_id"]}}},
         ]
         response = client.chat.completions.create(
-            model=os.getenv("OPENAI_MODEL", "qwen-plus"),
+            model=model_name,
             messages=[{"role": "system", "content": "你是校园办事助手。只通过提供的工具获取信息，必要时依次调用搜索、详情和清单工具。"}, {"role": "user", "content": user_text}],
             tools=tools,
             tool_choice="auto",
@@ -82,7 +83,7 @@ def model_run(user_text: str) -> tuple[list[ToolCall], list[Any]] | None:
                 calls.append(call)
                 results.append(result)
                 messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": json.dumps(result, ensure_ascii=False)})
-            response = client.chat.completions.create(model=os.getenv("OPENAI_MODEL", "qwen-plus"), messages=messages, tools=tools, tool_choice="auto")
+            response = client.chat.completions.create(model=model_name, messages=messages, tools=tools, tool_choice="auto")
         # Some local models stop after the search call. Complete the business
         # workflow from that model-selected guide so the UI always has a
         # concrete result to render.
