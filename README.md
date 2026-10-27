@@ -1,45 +1,77 @@
 # 校园办事指南助手
 
-一个面向学生的路径 B 项目：用户用自然语言描述校园事务，Agent 通过 Tool Calling 搜索本地指南、读取步骤与材料，并生成可下载的 Markdown/HTML 办事清单。
+这是一个面向学生的路径 B 智能体应用。用户用自然语言描述校园事务，真实模型负责理解需求并选择工具，程序再从结构化指南中读取信息，返回办理步骤、所需材料和可下载的办事清单。
 
-## 项目亮点
+## 一、项目功能
 
-- 4 个可调用业务工具：`search_guides`、`get_requirements`、`build_checklist`、`submit_application`
-- Streamlit 交互界面，右侧展示实际工具调用链
-- 使用真实模型进行多轮 Tool Calling
-- 支持 Ollama 本地模型和其他 OpenAI 兼容接口
-- 模拟提交必须经过用户确认，且不会连接真实学校系统
-- 数据、工具、界面分层，便于现场解释关键代码
+- 使用 Ollama 本地运行 `qwen2.5:7b`。
+- 支持自然语言到 Tool Calling 的完整流程。
+- 支持 8 类校园事项：请假、借阅证补办、校园卡补办、宿舍报修、证明打印、校园网服务、奖助学金申请、失物招领。
+- 生成 Markdown 和 HTML 两种办事清单。
+- 模拟提交需要用户明确勾选确认，只生成本地演示编号，不访问真实学校系统。
+- 使用 Streamlit 提供可交互网页界面。
 
-## 环境要求
+## 二、项目文件
 
-- Windows 10/11
-- Python 3.10+
+| 文件 | 作用 |
+| --- | --- |
+| `app.py` | 应用入口，负责页面、模型请求、Tool Calling 和结果展示。 |
+| `tools.py` | 业务工具、工具注册表、工具分发和提交确认检查。 |
+| `data/guides.json` | 结构化校园指南数据。 |
+| `requirements.txt` | Python 依赖列表。 |
+| `.env.example` | 模型配置示例，不包含真实密钥。 |
+| `slides.html` | 期末项目 PPT，浏览器可以直接打开。 |
+| `index.html` | 项目入口页，适合部署到静态网页服务。 |
+| `run_app.bat` | Windows 一键启动应用脚本。 |
+| `open_slides.bat` | Windows 一键打开 PPT 脚本。 |
 
-## 安装与启动（Windows PowerShell）
+## 三、直接查看 PPT
+
+PPT 是静态 HTML 文件，不需要安装 Python 或模型。
+
+下载项目后，直接双击 `slides.html`，或者双击 `open_slides.bat`。也可以在浏览器中打开本地文件。
+
+如果项目部署到了 GitHub Pages，打开站点首页后，点击“打开项目 PPT”即可。GitHub 的代码查看页面只显示源代码，不会把 HTML 自动渲染成网页。
+
+## 四、运行真实模型应用
+
+### 环境要求
+
+- Windows 10 或 Windows 11
+- Python 3.10 或更高版本
+- Ollama
+- 至少约 5 GB 可用磁盘空间，用于模型文件
+
+### 安装模型
+
+安装 Ollama 后，在 PowerShell 中执行：
 
 ```powershell
-cd W
+ollama pull qwen2.5:7b
+```
+
+### 启动应用
+
+进入项目文件夹后执行：
+
+```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-Copy-Item .env.example .env -ErrorAction SilentlyContinue
-python -m streamlit run app.py
+python -m streamlit run app.py --server.address 127.0.0.1 --server.port 8501
 ```
 
-如果你把仓库克隆到了其他目录，请把第一行 `cd W` 换成实际仓库路径。启动前请确保 Ollama 服务正在运行，或在 `.env` 中填写其他 OpenAI 兼容服务配置。浏览器打开 `http://127.0.0.1:8501`。
+浏览器打开：
 
-## 换电脑演示
+```text
+http://127.0.0.1:8501
+```
 
-PPT 不需要安装 Python，直接双击 `slides.html`，或双击 `open_slides.bat` 即可打开。
+Windows 用户也可以直接双击 `run_app.bat`。脚本会创建虚拟环境、安装依赖、启动 Ollama、检查模型并启动应用。
 
-如果使用 GitHub Pages，打开站点首页即可看到项目入口，再点击“打开项目 PPT”。GitHub 仓库的代码页面只会显示 `.bat` 和 `.py` 文件内容，不会自动执行应用。
+## 五、模型配置
 
-应用需要在演示电脑上安装 Python 和 Ollama。Windows 用户可以双击 `run_app.bat`，脚本会创建虚拟环境、安装依赖、检查并启动 `qwen2.5:7b`，然后打开 Streamlit 应用。首次运行需要下载约 4.7 GB 模型。
-
-## 可选模型配置
-
-默认配置使用 Ollama 的 `qwen2.5:7b`：
+项目默认连接本机 Ollama，不需要云端 API Token。`.env` 可以写成：
 
 ```env
 OPENAI_API_KEY=ollama
@@ -47,37 +79,45 @@ OPENAI_BASE_URL=http://localhost:11434/v1
 OPENAI_MODEL=qwen2.5:7b
 ```
 
-也可以在 `.env` 中填写其他 OpenAI 兼容服务的 Key、Base URL 和模型名。不要把真实 `.env` 提交到 Git。
+如果使用其他 OpenAI 兼容服务，可以替换接口地址、模型名称和密钥。真实 `.env` 不要提交到公开仓库。
 
-## 推荐演示话术
+## 六、一次请求如何执行
 
-1. “我想办理校园卡挂失补办，需要准备什么？”
-2. “宿舍水龙头坏了，报修流程和材料是什么？”
-3. “我想请病假，请生成一份办理清单。”
+以“我想办理校园卡挂失补办，需要准备什么？”为例：
 
-## 关键代码讲解
+1. Streamlit 接收用户输入。
+2. Qwen2.5 根据工具描述选择 `search_guides`。
+3. 程序在 `guides.json` 中匹配校园卡指南。
+4. 程序调用 `get_requirements` 读取步骤、材料、部门和地点。
+5. 用户表达需要材料或清单时，程序调用 `build_checklist`。
+6. 页面展示办理结果，并提供 Markdown 和 HTML 下载。
 
-- `tools.py`：三个业务工具和 `TOOL_REGISTRY`，负责可审计的本地业务操作。
-- `app.py:model_run`：执行多轮 Tool Calling，把工具结果继续交给模型，直到主路径结束。
-- `app.py:render_result`：将工具结果转成步骤、材料和下载文件。
+如果本地模型只返回搜索工具，程序会根据模型选择的指南自动补齐详情和清单步骤，保证页面能够显示完整结果。
 
-## 相比课堂 demo 的增量
+## 七、关键代码
 
-本项目不是单轮聊天换皮：新增了校园办事场景、本地结构化指南数据、四个业务工具、可见执行日志、办事清单文件产出，以及确认后模拟提交。
+- `tools.py` 的 `TOOL_REGISTRY`：工具白名单，限制模型只能调用已注册业务函数。
+- `tools.py` 的 `execute_tool`：按工具名称分发调用，并拒绝未知工具。
+- `app.py` 的 `model_run`：创建 OpenAI 兼容客户端，向模型发送工具定义，执行多轮 Tool Calling。
+- `app.py` 的 `render_result`：把工具结果渲染为步骤、材料、提示和下载按钮。
+- `tools.py` 的 `submit_application`：检查 `confirmed` 参数，保护有状态变化的模拟操作。
 
-## 数据与合规说明
+## 八、现场演示建议
 
-项目中的指南是课程演示用虚构数据，不包含真实学生个人信息。真实办理时应以学校官方最新文件为准；涉及个人信息时只使用虚构样例。
+1. 打开应用首页。
+2. 输入“我想办理校园卡挂失补办，需要准备什么？”。
+3. 等待本地 7B 模型完成推理，首次响应可能需要 20 至 30 秒。
+4. 展示步骤、材料、办理部门和地点。
+5. 下载 HTML 清单。
+6. 点击模拟提交但不勾选确认框，展示系统拒绝未授权操作。
+7. 勾选确认后再次提交，展示本地模拟编号。
 
----
+## 九、换电脑时的限制
 
-# W
+PPT 可以直接打开。真实模型应用不能只通过 GitHub 的代码页面运行，因为 GitHub 不会执行 Python、Streamlit 或 Ollama。
 
-HarmonyOS ArkUI demo for a wrong-answer cause knowledge base.
+演示电脑需要安装 Python 和 Ollama，或者把应用部署到支持 Python 和模型接口的云服务。若只需要汇报，可以直接展示 `slides.html`；若需要现场操作应用，请提前在演示电脑安装环境并下载模型。
 
-## Use in DevEco Studio
+## 十、数据说明
 
-Create an Empty Ability project, then copy `Index.ets` to
-`entry/src/main/ets/pages/Index.ets` (replacing the generated page). Run the
-project on a HarmonyOS virtual device. This demo uses in-memory sample data;
-entries are not persisted after the app process exits.
+项目中的校园指南和个人信息均为课程演示样例，不代表任何学校的真实规定。真实办理时应以学校官方最新通知为准，不要在演示中填写真实账号、密码、手机号或宿舍信息。
