@@ -33,6 +33,8 @@ python -m streamlit run app.py
 
 PPT 不需要安装 Python，直接双击 `slides.html`，或双击 `open_slides.bat` 即可打开。
 
+如果使用 GitHub Pages，打开站点首页即可看到项目入口，再点击“打开项目 PPT”。GitHub 仓库的代码页面只会显示 `.bat` 和 `.py` 文件内容，不会自动执行应用。
+
 应用需要在演示电脑上安装 Python 和 Ollama。Windows 用户可以双击 `run_app.bat`，脚本会创建虚拟环境、安装依赖、检查并启动 `qwen2.5:7b`，然后打开 Streamlit 应用。首次运行需要下载约 4.7 GB 模型。
 
 ## 可选模型配置
