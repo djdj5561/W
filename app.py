@@ -19,11 +19,14 @@ st.set_page_config(page_title="校园办事指南助手", page_icon="▣", layou
 st.markdown(
     """
     <style>
-    :root { --ink:#17212b; --muted:#5d6c76; --teal:#0b6e69; --deep:#123f43; --mint:#e8f4f1; --line:#d5e2de; --gold:#e6c36a; }
-    .stApp { background: #f7f8f5; color: var(--ink); }
+    :root { --ink:#17212b; --muted:#5d6c76; --teal:#0b6e69; --deep:#123f43; --mint:#e8f4f1; --line:#d5e2de; --gold:#e6c36a; --page:#eaf1ee; --canvas:#fbfcf8; }
+    .stApp { background: var(--page); color: var(--ink); }
+    [data-testid="stHeader"] { background: transparent; }
+    [data-testid="stAppViewContainer"] { background: var(--page); }
+    [data-testid="stMainBlockContainer"] { background: var(--canvas); border-radius: 18px; box-shadow: 0 18px 50px rgba(18,63,67,.08); }
     .block-container { max-width: 1260px; padding-top: 1.8rem; padding-bottom: 3rem; }
     h1,h2,h3 { color: var(--ink); letter-spacing: 0; }
-    .hero { background: var(--deep); color: #f6faf7; padding: 38px 42px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 12px 28px rgba(18,63,67,.13); }
+    .hero { background: var(--deep); color: #f6faf7; padding: 38px 42px; border-radius: 16px; margin-bottom: 28px; box-shadow: 0 16px 32px rgba(18,63,67,.18); border: 1px solid rgba(216,233,229,.2); }
     .hero h1 { color: #f6faf7; margin: 0 0 10px; font-size: 2.35rem; letter-spacing: -.02em; }
     .hero p { margin: 0; color: #d8e9e5; max-width: 720px; line-height: 1.65; }
     .eyebrow { color: #d9bd70; font-size: .76rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
@@ -32,7 +35,7 @@ st.markdown(
     .result-shell { border-top: 3px solid var(--teal); padding-top: 16px; margin-top: 28px; }
     .result-meta { color: var(--muted); font-size: .9rem; margin: 0 0 14px; }
     .guide-title { font-size: 1.35rem; font-weight: 750; color: var(--teal); margin-bottom: 6px; }
-    .catalog { border-top: 1px solid var(--line); }
+    .catalog { border-top: 1px solid var(--line); background: #f7faf7; padding: 4px 16px 2px; border-radius: 12px; }
     .catalog-item { padding: 13px 0 12px; border-bottom: 1px solid var(--line); }
     .catalog-item strong { color: var(--ink); font-size: .98rem; }
     .catalog-item span { display:block; color: var(--muted); font-size: .82rem; margin-top: 4px; line-height: 1.45; }
