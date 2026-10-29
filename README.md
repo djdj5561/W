@@ -21,9 +21,6 @@
 | `requirements.txt` | Python 依赖列表。 |
 | `.env.example` | 模型配置示例，不包含真实密钥。 |
 | `slides.html` | 期末项目 PPT，浏览器可以直接打开。 |
-| `index.html` | 项目入口页，适合部署到静态网页服务。 |
-| `run_app.bat` | Windows 一键启动应用脚本。 |
-| `open_slides.bat` | Windows 一键打开 PPT 脚本。 |
 
 ## 三、运行真实模型应用
 
@@ -59,7 +56,7 @@ python -m streamlit run app.py --server.address 127.0.0.1 --server.port 8501
 http://127.0.0.1:8501
 ```
 
-Windows 用户也可以直接双击 `run_app.bat`。脚本会创建虚拟环境、安装依赖、启动 Ollama、检查模型并启动应用。
+启动应用后，浏览器打开 `http://127.0.0.1:8501`。
 
 ## 四、模型配置
 
@@ -114,15 +111,8 @@ OPENAI_MODEL=qwen2.5:7b
 
 [校园办事指南助手期末项目 PPT](slides.html)
 
-### 应用演示截图
+### 核心文件
 
-下图是项目 Windows 启动脚本的演示截图。脚本会自动准备 Python 环境、安装依赖、启动模型服务并运行网页应用。
-
-![应用启动脚本演示](docs/run-app-script.png)
-
-### 相关文件
-
-- [项目入口页](index.html)
 - [校园办事指南助手应用代码](app.py)
 - [业务工具代码](tools.py)
 - [校园事项数据](data/guides.json)
