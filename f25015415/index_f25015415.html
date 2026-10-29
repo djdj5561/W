@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>蓝页 PPT 编辑器</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #19314c;
+      background: #edf2f7;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid #1768c6;
+      outline-offset: 2px;
+    }
+    .app { min-height: 100vh; }
+    header {
+      min-height: 64px;
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: white;
+      border-bottom: 1px solid #dbe4ee;
+    }
+    .brand { font-size: 19px; font-weight: 800; white-space: nowrap; }
+    .brand::before {
+      content: "";
+      display: inline-block;
+      width: 23px;
+      height: 23px;
+      margin-right: 9px;
+      vertical-align: -5px;
+      background: linear-gradient(90deg, #1768c6 50%, #91c8ec 50%);
+    }
+    #deckName {
+      width: min(280px, 32vw);
+      min-width: 100px;
+      padding: 8px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-weight: 600;
+      color: #19314c;
+    }
+    #deckName:hover, #deckName:focus { border-color: #bfd0e1; }
+    .actions { margin-left: auto; display: flex; gap: 8px; }
+    button {
+      border: 1px solid #c7d7e6;
+      border-radius: 5px;
+      padding: 8px 12px;
+      background: white;
+      color: #244b72;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    button:hover:not(:disabled) { background: #eef6ff; }
+    button.primary { background: #1768c6; border-color: #1768c6; color: white; }
+    button.primary:hover { background: #0d58ad; }
+    main {
+      height: calc(100vh - 64px);
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr) 280px;
+    }
+    aside { background: white; overflow: auto; padding: 20px 15px; }
+    .slides-panel { border-right: 1px solid #dbe4ee; }
+    .editor { border-left: 1px solid #dbe4ee; }
+    h2 { margin: 0 0 18px; font-size: 15px; }
+    #slideList { display: grid; gap: 11px; margin-bottom: 15px; }
+    .thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      padding: 0;
+      border: 2px solid transparent;
+      box-shadow: 0 2px 9px #163c611c;
+    }
+    .thumb.active { border-color: #1768c6; }
+    .thumb-inner {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      padding-left: 47%;
+      text-align: left;
+      font-size: 9px;
+      color: #19314c;
+      background: linear-gradient(90deg, #1768c6 42%, white 42%);
+    }
+    .thumb-inner.light {
+      background: linear-gradient(90deg, #dceefa 42%, white 42%);
+    }
+    .thumb-inner.blue {
+      padding-left: 10%;
+      color: white;
+      background: #1768c6;
+    }
+    .stage {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 22px;
+    }
+    .stage-top, .stage-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #61768a;
+      font-size: 13px;
+    }
+    .stage-bottom { justify-content: center; gap: 12px; }
+    .stage-bottom button { border: 0; background: transparent; font-size: 20px; }
+    .stage-center {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+    }
+    .slide {
+      width: min(100%, 960px, calc((100vh - 200px) * 16 / 9));
+      aspect-ratio: 16 / 9;
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 42% 58%;
+      background: white;
+      box-shadow: 0 15px 45px #173c6025;
+    }
+    .slide-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12%;
+      color: white;
+      background: #1768c6;
+    }
+    .slide.light .slide-left { color: #185b9c; background: #dceefa; }
+    .slide.blue { display: block; background: #1768c6; color: white; }
+    .slide.blue .slide-left { display: none; }
+    .slide-copy {
+      min-width: 0;
+      padding: 9%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .slide.blue .slide-copy { height: 100%; padding: 10%; }
+    .slide h1 {
+      margin: 0;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+      font-size: clamp(24px, 3.5vw, 56px);
+      line-height: 1.25;
+    }
+    .slide p {
+      margin: 6% 0 0;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+      color: #587087;
+      font-size: clamp(11px, 1.2vw, 19px);
+      line-height: 1.65;
+    }
+    .slide.blue p { color: #e0efff; }
+    .slide small { font-size: clamp(8px, 1vw, 14px); }
+    .page-number {
+      position: absolute;
+      right: 5%;
+      bottom: 5%;
+      font-size: 12px;
+      color: #8297aa;
+    }
+    .slide.blue .page-number { color: white; }
+    label { display: block; margin-bottom: 17px; font-size: 12px; font-weight: 700; }
+    label span { display: block; margin-bottom: 7px; color: #5a7187; }
+    label input, label textarea, label select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cbd9e7;
+      border-radius: 5px;
+      color: #19314c;
+      background: white;
+      font-size: 13px;
+    }
+    textarea { min-height: 94px; resize: vertical; line-height: 1.5; }
+    .editor-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .notice { color: #698095; font-size: 11px; line-height: 1.5; }
+    #presentation {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      place-items: center;
+      padding: 45px;
+      background: #0c2034;
+    }
+    #presentation.open { display: grid; }
+    #presentation .slide {
+      width: min(100%, calc((100vh - 95px) * 16 / 9));
+    }
+    .present-actions {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      display: flex;
+      gap: 8px;
+    }
+    @media (max-width: 780px) {
+      header { flex-wrap: wrap; padding: 12px; }
+      #deckName { flex: 1; }
+      .actions { width: 100%; justify-content: flex-end; }
+      .actions button { padding: 7px; font-size: 12px; }
+      main { display: flex; flex-direction: column; height: auto; }
+      .stage { order: 1; padding: 16px 12px; }
+      .stage-center { padding: 20px 0; }
+      .stage .slide { width: 100%; }
+      .slide h1 { font-size: clamp(17px, 5vw, 32px); }
+      .slide p { font-size: clamp(8px, 2vw, 13px); }
+      .slides-panel { order: 2; border-right: 0; border-top: 1px solid #dbe4ee; }
+      #slideList { display: flex; overflow-x: auto; }
+      .thumb { min-width: 145px; width: 145px; }
+      .editor { order: 3; border-left: 0; border-top: 1px solid #dbe4ee; }
+      #presentation { padding: 10px; }
+      #presentation .slide { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">蓝页</div>
+    <input id="deckName" aria-label="演示文稿名称">
+    <div class="actions">
+      <button id="pdfBtn">打印 / PDF</button>
+      <button id="pptxBtn">导出 PPTX</button>
+      <button id="presentBtn" class="primary">开始放映</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="slides-panel">
+      <h2>幻灯片 <span id="total"></span></h2>
+      <div id="slideList"></div>
+      <button id="addBtn">+ 新增页面</button>
+    </aside>
+
+    <section class="stage">
+      <div class="stage-top"><strong id="pageLabel"></strong><span>16:9 宽屏</span></div>
+      <div class="stage-center" id="preview"></div>
+      <div class="stage-bottom">
+        <button id="prevBtn" aria-label="上一页">‹</button>
+        <span id="counter"></span>
+        <button id="nextBtn" aria-label="下一页">›</button>
+      </div>
+    </section>
+
+    <aside class="editor">
+      <h2>页面内容</h2>
+      <label><span>顶部标签</span><input id="eyebrow"></label>
+      <label><span>标题</span><textarea id="title"></textarea></label>
+      <label><span>正文</span><textarea id="body"></textarea></label>
+      <label>
+        <span>版式</span>
+        <select id="layout">
+          <option value="split">蓝白拼接</option>
+          <option value="light">浅蓝拼接</option>
+          <option value="blue">整页蓝色</option>
+        </select>
+      </label>
+      <label><span>页脚</span><input id="footer"></label>
+      <div class="editor-actions">
+        <button id="copyBtn">复制页面</button>
+        <button id="deleteBtn">删除页面</button>
+      </div>
+      <p class="notice">内容自动保存在当前浏览器。导出 PPTX 需要联网。</p>
+    </aside>
+  </main>
+</div>
+
+<div id="presentation" role="dialog" aria-label="幻灯片放映">
+  <div id="presentSlide"></div>
+  <div class="present-actions">
+    <button id="presentPrev">上一页</button>
+    <button id="presentNext">下一页</button>
+    <button id="exitBtn">退出</button>
+  </div>
+</div>
+
+<!-- PPTX 导出所需的第三方库 -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@4.0.1/dist/pptxgen.min.js"></script>
+<script>
+  const storageKey = "blue-white-ppt";
+  const sample = {
+    name: "开源学习路线",
+    slides: [
+      {
+        layout: "split",
+        eyebrow: "开源微专业",
+        title: "从 Git 到\nAI 应用",
+        body: "一份关于工具、模型与实践的学习记录。",
+        footer: "学习分享"
+      },
+      {
+        layout: "light",
+        eyebrow: "学习路径",
+        title: "先把基础工具\n用起来",
+        body: "Git 管理代码和版本\nVS Code 编辑与调试\n从项目 README 开始实践",
+        footer: "开源微专业"
+      },
+      {
+        layout: "blue",
+        eyebrow: "下一步",
+        title: "用一个项目\n串起所学",
+        body: "选择模型，搭建流程，验证结果。",
+        footer: "谢谢观看"
+      }
+    ]
+  };
+
+  let deck;
+  try {
+    deck = JSON.parse(localStorage.getItem(storageKey)) || sample;
+    if (!Array.isArray(deck.slides) || !deck.slides.length) deck = sample;
+  } catch {
+    deck = sample;
+  }
+
+  let current = 0;
+  const el = id => document.getElementById(id);
+  const active = () => deck.slides[current];
+  const escapeHTML = value => String(value ?? "").replace(
+    /[&<>"']/g,
+    char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]
+  );
+
+  function save() {
+    localStorage.setItem(storageKey, JSON.stringify(deck));
+  }
+
+  function slideHTML(slide, index) {
+    return `
+      <article class="slide ${escapeHTML(slide.layout)}">
+        <div class="slide-left">
+          <small>${escapeHTML(slide.eyebrow)}</small>
+          <small>${escapeHTML(slide.footer)}</small>
+        </div>
+        <div class="slide-copy">
+          <h1>${escapeHTML(slide.title)}</h1>
+          <p>${escapeHTML(slide.body)}</p>
+        </div>
+        <span class="page-number">${String(index + 1).padStart(2, "0")}</span>
+      </article>`;
+  }
+
+  function render() {
+    el("deckName").value = deck.name;
+    el("total").textContent = `(${deck.slides.length})`;
+    el("pageLabel").textContent = `页面 ${current + 1}`;
+    el("counter").textContent = `${current + 1} / ${deck.slides.length}`;
+    el("preview").innerHTML = slideHTML(active(), current);
+    el("slideList").innerHTML = deck.slides.map((slide, index) => `
+      <button class="thumb ${index === current ? "active" : ""}"
+              data-index="${index}" aria-label="打开第 ${index + 1} 页">
+        <span class="thumb-inner ${escapeHTML(slide.layout)}">
+          ${escapeHTML(slide.title.replace(/\n/g, " "))}
+        </span>
+      </button>
+    `).join("");
+
+    for (const field of ["eyebrow", "title", "body", "layout", "footer"]) {
+      el(field).value = active()[field] || "";
+    }
+    el("prevBtn").disabled = current === 0;
+    el("nextBtn").disabled = current === deck.slides.length - 1;
+    el("deleteBtn").disabled = deck.slides.length === 1;
+
+    if (el("presentation").classList.contains("open")) {
+      el("presentSlide").innerHTML = slideHTML(active(), current);
+    }
+  }
+
+  el("slideList").addEventListener("click", event => {
+    const button = event.target.closest("[data-index]");
+    if (!button) return;
+    current = Number(button.dataset.index);
+    render();
+  });
+
+  for (const field of ["eyebrow", "title", "body", "layout", "footer"]) {
+    el(field).addEventListener("input", event => {
+      active()[field] = event.target.value;
+      save();
+      // 只更新预览，避免输入时光标跳动。
+      el("preview").innerHTML = slideHTML(active(), current);
+      if (field === "title" || field === "layout") {
+        el("slideList").querySelector(`[data-index="${current}"] .thumb-inner`)
+          .textContent = active().title.replace(/\n/g, " ");
+      }
+    });
+  }
+
+  el("deckName").addEventListener("input", event => {
+    deck.name = event.target.value;
+    save();
+  });
+
+  el("addBtn").onclick = () => {
+    deck.slides.splice(current + 1, 0, {
+      layout: "split",
+      eyebrow: "新页面",
+      title: "输入标题",
+      body: "输入正文",
+      footer: deck.name
+    });
+    current++;
+    save();
+    render();
+  };
+
+  el("copyBtn").onclick = () => {
+    deck.slides.splice(current + 1, 0, { ...active() });
+    current++;
+    save();
+    render();
+  };
+
+  el("deleteBtn").onclick = () => {
+    if (deck.slides.length === 1) return;
+    deck.slides.splice(current, 1);
+    current = Math.min(current, deck.slides.length - 1);
+    save();
+    render();
+  };
+
+  function previous() {
+    if (current > 0) { current--; render(); }
+  }
+  function next() {
+    if (current < deck.slides.length - 1) { current++; render(); }
+  }
+  el("prevBtn").onclick = el("presentPrev").onclick = previous;
+  el("nextBtn").onclick = el("presentNext").onclick = next;
+
+  el("presentBtn").onclick = () => {
+    el("presentation").classList.add("open");
+    el("presentSlide").innerHTML = slideHTML(active(), current);
+    el("presentation").requestFullscreen?.().catch(() => {});
+  };
+  el("exitBtn").onclick = () => {
+    el("presentation").classList.remove("open");
+    if (document.fullscreenElement) document.exitFullscreen();
+  };
+  document.addEventListener("keydown", event => {
+    if (!el("presentation").classList.contains("open")) return;
+    if (event.key === "Escape") el("exitBtn").click();
+    if (event.key === "ArrowRight") next();
+    if (event.key === "ArrowLeft") previous();
+  });
+
+  el("pdfBtn").onclick = () => {
+    const windowForPrint = window.open("", "_blank");
+    if (!windowForPrint) {
+      alert("请允许浏览器打开弹出窗口。");
+      return;
+    }
+    const css = document.querySelector("style").textContent;
+    windowForPrint.document.write(`
+      <!doctype html><html lang="zh-CN"><meta charset="UTF-8">
+      <title>${escapeHTML(deck.name)}</title>
+      <style>
+        ${css}
+        body { background: white; }
+        .slide {
+          width: 100vw; height: 56.25vw;
+          box-shadow: none; break-after: page;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        @page { size: landscape; margin: 0; }
+      </style>
+      <body>${deck.slides.map(slideHTML).join("")}</body></html>
+    `);
+    windowForPrint.document.close();
+    windowForPrint.onload = () => windowForPrint.print();
+  };
+
+  el("pptxBtn").onclick = async () => {
+    if (typeof PptxGenJS === "undefined" || typeof JSZip === "undefined") {
+      alert("导出库未加载，请连接网络后刷新页面重试。");
+      return;
+    }
+
+    const pptx = new PptxGenJS();
+    pptx.layout = "LAYOUT_WIDE";
+    pptx.title = deck.name;
+    pptx.author = "蓝页";
+    const blue = "1768C6";
+
+    deck.slides.forEach(item => {
+      const slide = pptx.addSlide();
+      const fullBlue = item.layout === "blue";
+      const paleBlue = item.layout === "light";
+      slide.background = { color: fullBlue ? blue : "FFFFFF" };
+
+      if (!fullBlue) {
+        slide.addShape(pptx.ShapeType.rect, {
+          x: 0, y: 0, w: 5.6, h: 7.5,
+          line: { color: paleBlue ? "DCEEFA" : blue },
+          fill: { color: paleBlue ? "DCEEFA" : blue }
+        });
+      }
+
+      const leftColor = paleBlue ? "185B9C" : "FFFFFF";
+      slide.addText(item.eyebrow, {
+        x: fullBlue ? 1.1 : .6, y: .7, w: 4.5, h: .5,
+        fontFace: "Microsoft YaHei", fontSize: 14,
+        bold: true, color: fullBlue ? "FFFFFF" : leftColor
+      });
+      slide.addText(item.title, {
+        x: fullBlue ? 1.1 : 6.1, y: 2, w: fullBlue ? 10 : 6.2, h: 2,
+        fontFace: "Microsoft YaHei", fontSize: 38,
+        bold: true, color: fullBlue ? "FFFFFF" : "19314C",
+        breakLine: false, fit: "shrink"
+      });
+      slide.addText(item.body, {
+        x: fullBlue ? 1.1 : 6.1, y: 4.2, w: fullBlue ? 10 : 6.2, h: 2,
+        fontFace: "Microsoft YaHei", fontSize: 18,
+        color: fullBlue ? "E0EFFF" : "587087",
+        breakLine: false, fit: "shrink"
+      });
+      slide.addText(item.footer, {
+        x: fullBlue ? 1.1 : .6, y: 6.7, w: 4.5, h: .4,
+        fontFace: "Microsoft YaHei", fontSize: 11,
+        color: fullBlue ? "FFFFFF" : leftColor
+      });
+    });
+
+    const filename = (deck.name.trim() || "演示文稿")
+      .replace(/[\\/:*?"<>|]/g, "-") + ".pptx";
+    await pptx.writeFile({ fileName: filename });
+  };
+
+  render();
+</script>
+</body>
+</html>
