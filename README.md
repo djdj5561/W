@@ -23,7 +23,7 @@
 | `slides.html` | 期末项目 PPT，浏览器可以直接打开。 |
 | `启动校园助手.bat` | Windows 一键启动脚本，双击后自动准备环境并打开应用。 |
 
-## 三、运行真实模型应用
+## 三、运行应用
 
 ### 环境要求
 
@@ -32,37 +32,42 @@
 - Ollama
 - 至少约 5 GB 可用磁盘空间，用于模型文件
 
-### 安装模型
+### 方法一：PowerShell 一次启动
 
-安装 Ollama 后，在 PowerShell 中执行：
-
-```powershell
-ollama pull qwen2.5:7b
-```
-
-### 启动应用
-
-Windows 用户可以直接双击项目根目录中的 `启动校园助手.bat`。首次运行会创建虚拟环境、安装依赖并准备模型，完成后自动打开应用页面。
-启动脚本已关闭 Streamlit 的首次邮箱/统计提示，不需要在终端输入额外内容。
-
-也可以在项目文件夹中打开 PowerShell，手动执行：
-
-进入项目文件夹后执行：
+下载并解压整个仓库后，在 PowerShell 中复制下面的完整代码。只需要修改第一行的项目路径：
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m streamlit run app.py --server.address 127.0.0.1 --server.port 8501
+$project = "C:\Users\51600\Documents\Codex\2026-10-26\new-chat\outputs\campus-guide-assistant"
+Set-Location $project
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) { throw "未找到 Python，请先安装 Python 3.10 或更高版本。" }
+if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) { throw "未找到 Ollama，请先安装 Ollama。" }
+if (-not (Test-Path ".venv\Scripts\python.exe")) { python -m venv .venv }
+& ".venv\Scripts\python.exe" -m pip install -r requirements.txt
+$model = ollama list 2>$null | Select-String "qwen2.5:7b"
+if (-not $model) { ollama pull qwen2.5:7b }
+$port = Get-NetTCPConnection -LocalPort 8501 -State Listen -ErrorAction SilentlyContinue
+if ($port) {
+    Start-Process "http://127.0.0.1:8501"
+    Write-Host "应用已经在运行，已打开 http://127.0.0.1:8501"
+} else {
+    Start-Process "http://127.0.0.1:8501"
+    & ".venv\Scripts\python.exe" -m streamlit run app.py --server.address 127.0.0.1 --server.port 8501 --browser.gatherUsageStats false
+}
 ```
 
-浏览器打开：
+首次运行会创建虚拟环境、安装依赖，并下载约 4.7 GB 的 `qwen2.5:7b` 模型。以后再次运行会直接启动应用。
+
+应用地址：
 
 ```text
 http://127.0.0.1:8501
 ```
 
-启动应用后，浏览器打开 `http://127.0.0.1:8501`。
+如果提示 `Port 8501 is not available`，说明应用已经运行，直接打开上面的地址即可，不要重复启动。
+
+### 方法二：双击启动
+
+也可以直接双击项目根目录中的 `启动校园助手.bat`。这个文件已经包含在仓库中，不需要单独下载；它会自动创建虚拟环境、安装依赖、准备模型并启动应用。
 
 ## 四、模型配置
 
