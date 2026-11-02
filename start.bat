@@ -10,6 +10,12 @@ if not exist ".venv\Scripts\python.exe" (
   python -m venv .venv || (echo Failed to create virtual environment.& pause & exit /b 1)
 )
 
+".venv\Scripts\python.exe" -m pip --version >nul 2>&1
+if errorlevel 1 (
+  echo Repairing pip...
+  ".venv\Scripts\python.exe" -m ensurepip --upgrade || (echo Could not install pip.& pause & exit /b 1)
+)
+
 echo Installing dependencies...
 ".venv\Scripts\python.exe" -m pip install -r requirements.txt || (echo Dependency installation failed.& pause & exit /b 1)
 

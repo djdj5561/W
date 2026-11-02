@@ -27,6 +27,17 @@ if not exist ".venv\Scripts\python.exe" (
   )
 )
 
+".venv\Scripts\python.exe" -m pip --version >nul 2>&1
+if errorlevel 1 (
+  echo Repairing pip...
+  ".venv\Scripts\python.exe" -m ensurepip --upgrade
+  if errorlevel 1 (
+    echo Could not install pip.
+    pause
+    exit /b 1
+  )
+)
+
 echo Checking Python dependencies...
 ".venv\Scripts\python.exe" -m pip install -r requirements.txt
 if errorlevel 1 (
